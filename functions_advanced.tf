@@ -10,7 +10,7 @@ locals {
   # Case 11: for_each over a map; runtime is each.value.runtime
   workers = {
     "worker-node16" = { runtime = "nodejs16.x", handler = "index.handler", zip = "node" }
-    "worker-py38"   = { runtime = "python3.8", handler = "handler.handler", zip = "python" }
+    "worker-py38"   = { runtime = "python3.13", handler = "handler.handler", zip = "python" }
   }
 }
 

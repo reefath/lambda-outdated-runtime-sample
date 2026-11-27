@@ -28,7 +28,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: report
-              image: public.ecr.aws/docker/library/python:3.8-slim
+              image: public.ecr.aws/docker/library/python:3.13-slim
               command: ["python", "-m", "report"]
 ---
 # policy/v1beta1 PodDisruptionBudget removed in 1.25: use policy/v1.

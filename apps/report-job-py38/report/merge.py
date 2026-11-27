@@ -1,4 +1,4 @@
-from collections import Mapping  # removed in Python 3.10: use collections.abc.Mapping
+from collections.abc import Mapping
 
 
 def deep_merge(base, extra):

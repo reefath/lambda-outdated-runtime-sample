@@ -1,4 +1,4 @@
-import imp  # removed in Python 3.12: use importlib
+import importlib.util
 import os
 
 _HERE = os.path.dirname(__file__)
@@ -6,4 +6,7 @@ _HERE = os.path.dirname(__file__)
 
 def load_plugin(name):
     path = os.path.join(_HERE, "plugin_%s.py" % name)
-    return imp.load_source("report_plugin_%s" % name, path)
+    spec = importlib.util.spec_from_file_location("report_plugin_%s" % name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module

@@ -3,7 +3,7 @@ import datetime
 
 
 def stamp():
-    return datetime.datetime.utcnow().isoformat() + "Z"  # deprecated in 3.12: use datetime.now(timezone.utc)
+    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat() + "Z"
 
 
 async def _now():
@@ -11,5 +11,4 @@ async def _now():
 
 
 def run_at():
-    loop = asyncio.get_event_loop()  # deprecated with no running loop: use asyncio.run()
-    return loop.run_until_complete(_now())
+    return asyncio.run(_now())

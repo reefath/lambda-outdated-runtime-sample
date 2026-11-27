@@ -4,3 +4,5 @@
 function.zip
 terraform.tfvars
 .zips/
+__pycache__/
+*.pyc

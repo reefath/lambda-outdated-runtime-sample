@@ -11,7 +11,7 @@ locals {
 
   # EU case 4: for_each over a map
   eu_workers = {
-    "py39"   = { runtime = "python3.9", handler = "handler.handler", zip = "python" }
+    "py39"   = { runtime = "python3.13", handler = "handler.handler", zip = "python" }
     "ruby32" = { runtime = "ruby3.2", handler = "handler.handler", zip = "ruby" }
   }
   eu_zips = {
@@ -46,19 +46,19 @@ resource "aws_lambda_function" "eu_node20" {
   tags             = local.tags
 }
 
-# EU case 3: Python 3.10, literal
+# EU case 3: Python 3.13, literal
 resource "aws_lambda_function" "eu_py310" {
   provider         = aws.eu
   function_name    = "health-eu-py310-literal"
   role             = var.lambda_role_arn
   handler          = "handler.handler"
-  runtime          = "python3.10"
+  runtime          = "python3.13"
   filename         = data.archive_file.function.output_path
   source_code_hash = data.archive_file.function.output_base64sha256
   tags             = local.tags
 }
 
-# EU case 4: for_each map (python3.9, ruby3.2)
+# EU case 4: for_each map (python3.13, ruby3.2)
 resource "aws_lambda_function" "eu_workers" {
   provider         = aws.eu
   for_each         = local.eu_workers
@@ -107,13 +107,13 @@ resource "aws_lambda_function" "eu_provided_al2" {
   tags             = local.tags
 }
 
-# EU case 8: real-code app (same as case 23), Python 3.8
+# EU case 8: real-code app (same as case 23), Python 3.13
 resource "aws_lambda_function" "eu_report_job" {
   provider         = aws.eu
   function_name    = "health-eu-app-report-job"
   role             = var.lambda_role_arn
   handler          = "app.handler"
-  runtime          = "python3.8"
+  runtime          = "python3.13"
   filename         = data.archive_file.report_job.output_path
   source_code_hash = data.archive_file.report_job.output_base64sha256
   timeout          = 15

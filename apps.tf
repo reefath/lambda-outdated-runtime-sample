@@ -37,7 +37,7 @@ resource "aws_lambda_function" "report_job" {
   function_name    = "health-td-app-report-job"
   role             = var.lambda_role_arn
   handler          = "app.handler"
-  runtime          = "python3.8"
+  runtime          = "python3.13"
   filename         = data.archive_file.report_job.output_path
   source_code_hash = data.archive_file.report_job.output_base64sha256
   timeout          = 15

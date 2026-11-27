@@ -1,6 +1,6 @@
 # Outdated AWS Lambda runtime sample
 
-This repository contains a minimal Python Lambda handler and Terraform configuration that intentionally selects the outdated `python3.8` runtime for scanner/compliance demonstrations. Python 3.8 is past its AWS Lambda deprecation date. AWS may restrict creating or updating functions with deprecated runtimes. Do not use this sample for production.
+This repository contains a minimal Python Lambda handler and Terraform configuration for scanner/compliance demonstrations. All Python Lambda functions now use the supported `python3.13` runtime (previously `python3.8`, `python3.9` and `python3.10`, which are deprecated in AWS Lambda). Do not use this sample for production.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ Set `lambda_role_arn` in `terraform.tfvars` (do not commit credentials):
 lambda_role_arn = "arn:aws:iam::123456789012:role/lambda-execution-role"
 ```
 
-The configuration packages `handler.py` and deliberately sets `runtime = "python3.8"` in `main.tf` so infrastructure scanners can detect the outdated runtime.
+The configuration packages `handler.py` and sets `runtime = "python3.13"` in `main.tf`. Python code requires Python 3.13.
 
 ## Test cases for the AWS Health lifecycle TD
 
@@ -23,12 +23,12 @@ Deployed to test account 539575856470 (us-east-1) by `.github/workflows/deploy.y
 
 | # | Resource | Runtime / version | How it is set | Fix TD | Expected TD result |
 |---|---|---|---|---|---|
-| 0 | outdated-lambda-runtime-sample | python3.8 | literal (main.tf) | AWS/python-version-upgrade | Found |
+| 0 | outdated-lambda-runtime-sample | python3.13 (was python3.8) | literal (main.tf) | AWS/python-version-upgrade | Found |
 | 1 | health-td-node16-literal | nodejs16.x | literal | AWS/lambda-nodejs-runtime-upgrade | Found |
 | 2 | health-td-node18-variable | nodejs18.x | `var.node18_runtime` default | AWS/lambda-nodejs-runtime-upgrade | Found only if the agent resolves the variable (known issue K12) |
 | 3 | health-td-node20-lookup | nodejs20.x | `lookup(local.node_runtimes, ...)` | AWS/lambda-nodejs-runtime-upgrade | Missed (known P0: unlisted reference forms) |
-| 4 | health-td-py39-env-folder | python3.9 | literal in `env/prod/main.tf` | AWS/python-version-upgrade | Missed (known P0 K5: `env/` folder skipped) |
-| 5 | health-td-py310-tfvars | python3.10 | `runtimes.auto.tfvars` only | AWS/python-version-upgrade | Found only if the agent resolves the variable |
+| 4 | health-td-py39-env-folder | python3.13 (was python3.9) | literal in `env/prod/main.tf` | AWS/python-version-upgrade | Missed (known P0 K5: `env/` folder skipped) |
+| 5 | health-td-py310-tfvars | python3.13 (was python3.10) | `runtimes.auto.tfvars` only | AWS/python-version-upgrade | Found only if the agent resolves the variable |
 | 6 | health-td-ruby32-literal | ruby3.2 | literal | AWS/ruby-upgrade | Found |
 | 7 | health-td-ruby33-module | ruby3.3 | literal passed to `modules/lambda_fn` | AWS/ruby-upgrade | Found |
 | 8 | health-td-dotnet6-literal | dotnet6 | literal | AWS/dotnet-lambda-upgrade | Found |
@@ -43,16 +43,16 @@ All of these should also get AWS Health lifecycle events, so "missed" cases show
 
 | # | Resource | Runtime / version | How it is set | Fix TD | Expected TD result |
 |---|---|---|---|---|---|
-| 11 | health-td-foreach-worker-node16, health-td-foreach-worker-py38 | nodejs16.x, python3.8 | `for_each` map, `each.value.runtime` | nodejs, python | Missed (known P0: unlisted reference forms) |
+| 11 | health-td-foreach-worker-node16, health-td-foreach-worker-py38 | nodejs16.x, python3.13 (was python3.8) | `for_each` map, `each.value.runtime` | nodejs, python | Missed (known P0: unlisted reference forms) |
 | 12 | health-td-java8-coalesce | java8.al2 | `coalesce(var.x, "java8.al2")` | AWS/java-version-upgrade | Missed (known P0) |
 | 13 | health-td-node-interpolated | nodejs20.x | `"nodejs${var.node_major}.x"` | AWS/lambda-nodejs-runtime-upgrade | Missed |
 | 14 | health-td-dotnet6-prefixed-key | dotnet6 | module input named `lambda_runtime` | AWS/dotnet-lambda-upgrade | Missed (known P1: prefixed key) |
 | 15 | health-td-provided-al2 | provided.al2 | literal | none (custom runtime) | Missed (known P1 K10: provided.al2 never matched) |
 | 16 | health-td-comment-decoy | python3.12 (old version only in a comment) | end-of-line comment | none | Should give NO finding (known P1: mid-line comments become findings) |
-| 17 | health-td-cfn-findinmap-py39 | python3.9 | CFN `!FindInMap` | AWS/python-version-upgrade | Missed (known P0) |
+| 17 | health-td-cfn-findinmap-py39 | python3.13 (was python3.9) | CFN `!FindInMap` | AWS/python-version-upgrade | Missed (known P0) |
 | 18 | health-td-cfn-if-node18 | nodejs18.x | CFN `!If` | AWS/lambda-nodejs-runtime-upgrade | Missed (known P0) |
 | 19 | health-td-cfn-refparam-node20 | nodejs20.x | CFN `!Ref` Parameter default | AWS/lambda-nodejs-runtime-upgrade | Found only if the agent resolves the parameter |
-| 20 | health-td-secret-rotation-py310 | python3.10 | literal in `secret-rotation.tf` | AWS/python-version-upgrade | Missed (known P1: file names with "secret" skipped) |
+| 20 | health-td-secret-rotation-py310 | python3.13 (was python3.10) | literal in `secret-rotation.tf` | AWS/python-version-upgrade | Missed (known P1: file names with "secret" skipped) |
 | 21 | health-td-json-ruby32 | ruby3.2 | Terraform JSON (`legacy.tf.json`) | AWS/ruby-upgrade | Should be found (literal line) |
 | C | health-td-eks-foreach-a | 1.31 | `for_each` map, `each.value.version` | AWS/eks-kubernetes-version-upgrade | Missed (known P0) |
 | D | health-td-eks-conditional | 1.32 | `local.is_prod ? "1.32" : "1.35"` | AWS/eks-kubernetes-version-upgrade | Missed or wrong version |
@@ -81,7 +81,7 @@ Lambda base images (`public.ecr.aws/lambda/<runtime>`): each app works on its ol
 | # | Where | Today | Deployed? | Proof it breaks on a plain bump |
 |---|---|---|---|---|
 | 22 | `apps/orders-api-node16/` (`health-td-app-orders-api`) | nodejs16.x | Yes (`apps.tf`) | nodejs22: `Cannot find module 'aws-sdk'`. nodejs24: `util.isString is not a function` |
-| 23 | `apps/report-job-py38/` (`health-td-app-report-job`) | python3.8 | Yes (`apps.tf`) | python3.12: `cannot import name 'Mapping' from 'collections'`; tests fail |
+| 23 | `apps/report-job-py38/` (`health-td-app-report-job`) | python3.13 (was python3.8) | Yes (`apps.tf`) | Upgraded to python3.13 (code, tests and pins updated; tests pass) |
 | 24 | `apps/billing-ruby32/` (`health-td-app-billing`) | ruby3.2 | Yes (`apps.tf`) | ruby3.4: `literal string will be frozen in the future` warning |
 | 25 | `services/invoice-java8/` (SAM) | java8.al2 | No, code only | Uses JAXB, `sun.misc.BASE64Encoder` and Nashorn, all removed by Java 15 |
 | 26 | `services/pricing-dotnet6/` (SAM) | dotnet6 | No, code only | Uses `BinaryFormatter`, removed in .NET 9 |
@@ -98,14 +98,14 @@ Lambda base images (`public.ecr.aws/lambda/<runtime>`): each app works on its ol
 - [ ] `url.parse()` → `new URL()`; `querystring` → `URLSearchParams`
 - [ ] `util.isArray` → `Array.isArray`; `util.isString` → `typeof x === 'string'`
 
-**23: Python 3.8 → 3.12+** (`AWS/python-version-upgrade`)
-- [ ] `runtime` in `apps.tf`, `.python-version`, `requirements.txt` pins
-- [ ] `collections.Mapping` → `collections.abc.Mapping`
-- [ ] `distutils.version.LooseVersion` → `packaging.version` (add it to requirements and the zip) or own code
-- [ ] `imp.load_source` → `importlib.util.spec_from_file_location`
-- [ ] `configparser.SafeConfigParser` → `ConfigParser`
-- [ ] `datetime.utcnow()` → `datetime.now(timezone.utc)`; `asyncio.get_event_loop().run_until_complete` → `asyncio.run`
-- [ ] tests: `assertEquals` → `assertEqual`, `assertRegexpMatches` → `assertRegex`; tests pass on the new version
+**23: Python 3.8 → 3.12+** (`AWS/python-version-upgrade`) — done: upgraded to Python 3.13
+- [x] `runtime` in `apps.tf`, `.python-version`, `requirements.txt` pins
+- [x] `collections.Mapping` → `collections.abc.Mapping`
+- [x] `distutils.version.LooseVersion` → `packaging.version` (add it to requirements and the zip) or own code (own code used)
+- [x] `imp.load_source` → `importlib.util.spec_from_file_location`
+- [x] `configparser.SafeConfigParser` → `ConfigParser`
+- [x] `datetime.utcnow()` → `datetime.now(timezone.utc)`; `asyncio.get_event_loop().run_until_complete` → `asyncio.run`
+- [x] tests: `assertEquals` → `assertEqual`, `assertRegexpMatches` → `assertRegex`; tests pass on the new version
 
 **24: Ruby 3.2 → 3.4** (`AWS/ruby-upgrade`)
 - [ ] `runtime` in `apps.tf`, `ruby` in `Gemfile`, `.ruby-version`
@@ -150,11 +150,11 @@ second Region are read and linked (the report should say "in eu-central-1").
 |---|---|---|---|
 | EU1 | health-eu-node18-literal | nodejs18.x | literal |
 | EU2 | health-eu-node20-variable | nodejs20.x | `var.eu_node_runtime` default |
-| EU3 | health-eu-py310-literal | python3.10 | literal |
-| EU4 | health-eu-foreach-py39, health-eu-foreach-ruby32 | python3.9, ruby3.2 | `for_each` map |
+| EU3 | health-eu-py310-literal | python3.13 (was python3.10) | literal |
+| EU4 | health-eu-foreach-py39, health-eu-foreach-ruby32 | python3.13 (was python3.9), ruby3.2 | `for_each` map |
 | EU5 | health-eu-dotnet8-literal | dotnet8 | literal |
 | EU6 | health-eu-java8al2-literal | java8.al2 | literal |
 | EU7 | health-eu-provided-al2 | provided.al2 | literal |
-| EU8 | health-eu-app-report-job | python3.8 | literal, real code (same as case 23) |
+| EU8 | health-eu-app-report-job | python3.13 (was python3.8) | literal, real code (same as case 23) |
 | EU-A | health-eu-eks-literal | 1.32, EXTENDED | literal |
 | EU-B | health-eu-eks-variable | 1.34, STANDARD | `var.eu_eks_version` default |

@@ -14,7 +14,7 @@ Parameters:
 Mappings:
   RuntimeMap:
     prod:
-      Runtime: python3.9
+      Runtime: python3.13
     dev:
       Runtime: python3.12
 

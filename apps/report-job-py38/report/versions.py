@@ -1,5 +1,16 @@
-from distutils.version import LooseVersion  # distutils was removed in Python 3.12
+import re
+
+# Same component splitting as the removed distutils.version.LooseVersion.
+_COMPONENT = re.compile(r"(\d+|[a-z]+|\.)")
+
+
+def _loose_key(version):
+    return [
+        int(part) if part.isdigit() else part
+        for part in _COMPONENT.split(version)
+        if part and part != "."
+    ]
 
 
 def newest(versions):
-    return str(max(LooseVersion(v) for v in versions))
+    return max(versions, key=_loose_key)
